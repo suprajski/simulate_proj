@@ -20,16 +20,12 @@ def jacobi_cupy(u, interior_mask, max_iter, atol=1e-6):
     for i in range(max_iter):
         u_new = 0.25 * (u_gpu[1:-1, :-2] + u_gpu[1:-1, 2:] + u_gpu[:-2, 1:-1] + u_gpu[2:, 1:-1])
         
-        # Get the new interior pixels
         u_new_interior = u_new[interior_mask_gpu]
         
-        # 1. Calculate delta 
         delta = cp.abs(u_gpu[1:-1, 1:-1][interior_mask_gpu] - u_new_interior).max()
         
-        # 2. Update main grid
         u_gpu[1:-1, 1:-1][interior_mask_gpu] = u_new_interior
-
-        # 3. Check early stopping
+        
         if delta < atol:
             break
                 
