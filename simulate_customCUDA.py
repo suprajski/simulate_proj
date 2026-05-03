@@ -39,8 +39,7 @@ def jacobi_numba(u, interior_mask, max_iter):
         # Call the kernel
         jacobi_kernel[blockspergrid, threadsperblock](d_u, d_u_new, d_mask)
         
-        # Swap the arrays! The new state becomes the old state for the next loop.
-        # This is instantaneous and requires no memory copying.
+        # Swap the arrays
         d_u, d_u_new = d_u_new, d_u
         
     # 4. Ship the final grid back to the CPU
