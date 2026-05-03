@@ -23,26 +23,20 @@ def jacobi_kernel(u_old, u_new, mask):
 
 
 def jacobi_numba(u, interior_mask, max_iter):
-    # 1. Ship data to the GPU
     d_u = cuda.to_device(u)
-    d_u_new = cuda.to_device(u) # Create a second identical copy for double-buffering
+    d_u_new = cuda.to_device(u) 
     d_mask = cuda.to_device(interior_mask)
     
-    # 2. Define the Thread Grid 
     threadsperblock = (16, 16)
     blockspergrid_x = math.ceil(u.shape[0] / threadsperblock[0])
     blockspergrid_y = math.ceil(u.shape[1] / threadsperblock[1])
     blockspergrid = (blockspergrid_x, blockspergrid_y)
     
-    # 3. Run the iterations
     for _ in range(max_iter):
-        # Call the kernel
         jacobi_kernel[blockspergrid, threadsperblock](d_u, d_u_new, d_mask)
         
-        # Swap the arrays
         d_u, d_u_new = d_u_new, d_u
         
-    # 4. Ship the final grid back to the CPU
     return d_u.copy_to_host()
 
 
