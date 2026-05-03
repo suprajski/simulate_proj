@@ -23,10 +23,10 @@ def jacobi_cupy(u, interior_mask, max_iter, atol=1e-6):
         # Get the new interior pixels
         u_new_interior = u_new[interior_mask_gpu]
         
-        # 1. Calculate delta FIRST (subtracting new from old)
+        # 1. Calculate delta 
         delta = cp.abs(u_gpu[1:-1, 1:-1][interior_mask_gpu] - u_new_interior).max()
         
-        # 2. THEN update the main grid
+        # 2. Update main grid
         u_gpu[1:-1, 1:-1][interior_mask_gpu] = u_new_interior
 
         # 3. Check early stopping
