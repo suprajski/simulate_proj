@@ -21,10 +21,13 @@ def jacobi_cupy(u, interior_mask, max_iter, atol=1e-6):
     for i in range(max_iter):
         u_new = 0.25 * (u_gpu[1:-1, :-2] + u_gpu[1:-1, 2:] + u_gpu[:-2, 1:-1] + u_gpu[2:, 1:-1])
         
+        # 1. Calculate the difference BEFORE overwriting the old grid!
         delta = cp.max(cp.abs(u_gpu[1:-1, 1:-1] - u_new) * interior_mask_gpu)
         
+        # 2. Now it is safe to update the main grid
         u_gpu[1:-1, 1:-1] = cp.where(interior_mask_gpu, u_new, u_gpu[1:-1, 1:-1])
-         
+        
+        # 3. Check for early stopping
         if i % 50 == 0: 
             if delta < atol:
                 break
@@ -51,11 +54,17 @@ if __name__ == '__main__':
     with open(join(LOAD_DIR, 'building_ids.txt'), 'r') as f:
         building_ids = f.read().splitlines()
 
-    if len(sys.argv) < 2:
-        N = 1
-    else:
+    if len(sys.argv) == 3:
+        start_idx = int(sys.argv[1])
+        end_idx = int(sys.argv[2])
+        building_ids = building_ids[start_idx:end_idx]
+    elif len(sys.argv) == 2:
         N = int(sys.argv[1])
-    building_ids = building_ids[:N]
+        building_ids = building_ids[:N]
+    else:
+        building_ids = building_ids[:20]
+
+    N = len(building_ids)
 
     # Load floor plans
     all_u0 = np.empty((N, 514, 514))

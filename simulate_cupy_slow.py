@@ -14,22 +14,26 @@ def load_data(load_dir, bid):
 
 
 def jacobi_cupy(u, interior_mask, max_iter, atol=1e-6):
-    # 1. Ship arrays from Host (CPU RAM) to Device (GPU VRAM)
     u_gpu = cp.asarray(u)
     interior_mask_gpu = cp.asarray(interior_mask)
 
     for i in range(max_iter):
         u_new = 0.25 * (u_gpu[1:-1, :-2] + u_gpu[1:-1, 2:] + u_gpu[:-2, 1:-1] + u_gpu[2:, 1:-1])
+        
+        # Get the new interior pixels
         u_new_interior = u_new[interior_mask_gpu]
         
+        # 1. Calculate delta FIRST (subtracting new from old)
+        delta = cp.abs(u_gpu[1:-1, 1:-1][interior_mask_gpu] - u_new_interior).max()
+        
+        # 2. THEN update the main grid
         u_gpu[1:-1, 1:-1][interior_mask_gpu] = u_new_interior
 
-        delta = cp.abs(u_gpu[1:-1, 1:-1][interior_mask_gpu] - u_new_interior).max()
+        # 3. Check early stopping
         if delta < atol:
             break
                 
     return cp.asnumpy(u_gpu)
-
 
 def summary_stats(u, interior_mask):
     u_interior = u[1:-1, 1:-1][interior_mask]
